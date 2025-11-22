@@ -6,7 +6,7 @@
     Music Setup:
     - Game music: Plays during the heart-popping game
     - Victory music: Plays after winning the game
-    - Both songs hosted on Google Drive
+    - Both songs hosted on GitHub
     - Music switches automatically with smooth fade transition
     
     To deploy:
@@ -720,22 +720,11 @@
 
 <!-- First song - plays during the game -->
 <audio id="bgm1" loop>
-    <!-- 
-        TO ADD YOUR OWN MUSIC:
-        1. Upload MP3 to GitHub (recommended) or Dropbox
-        2. Get the streaming URL (not download URL)
-        3. Replace the src below
-        
-        GitHub: https://raw.githubusercontent.com/username/repo/main/song1.mp3
-        Dropbox: https://dl.dropboxusercontent.com/s/xxxxx/song1.mp3
-    -->
-    <!-- Using free birthday music for now - replace with your song -->
     <source src="https://github.com/GDarknessX/bb_birthdaay/raw/d3babd184fc8233a8d44018f90d24470130b7616/%E7%81%AB%E5%8A%9B%E5%85%A8%E5%BC%80-%E7%8E%8B%E5%8A%9B%E5%AE%8F%231qvzP%20(1).mp3" type="audio/mp3">
 </audio>
 
 <!-- Second song - plays after winning the game -->
 <audio id="bgm2" loop>
-    <!-- Replace with your victory/romantic song URL -->
     <source src="https://github.com/GDarknessX/bb_birthdaay/raw/d3babd184fc8233a8d44018f90d24470130b7616/%E7%94%9F%E6%97%A5%E5%BF%AB%E4%B9%90-%E5%8D%93%E4%BE%9D%E5%A9%B7%23aD3f.mp3" type="audio/mp3">
 </audio>
 
@@ -957,7 +946,7 @@ rewardCard.onclick = function() {
     }
 };
 
-// MUSIC CONTROL
+// MUSIC CONTROL - FIXED VERSION
 const bgm1 = document.getElementById('bgm1'); // Game music
 const bgm2 = document.getElementById('bgm2'); // Victory music
 const musicBtn = document.getElementById('musicBtn');
@@ -973,18 +962,30 @@ bgm2.volume = 0.7;
 // Function to start music
 function startMusic() {
     if (firstInteraction) {
-        currentBgm.play().catch(() => {});
+        // If game has been won, start with victory music, otherwise game music
+        currentBgm = hasWonGame ? bgm2 : bgm1;
+        currentBgm.play().catch((err) => {
+            console.log('Music autoplay failed:', err);
+        });
         musicOn = true;
         musicBtn.innerText = '🔊';
         firstInteraction = false;
     }
 }
 
-// Function to switch to victory music with fade
+// FIXED: Function to switch to victory music
 function switchToVictoryMusic() {
-    if (musicOn && !hasWonGame) {
-        hasWonGame = true;
-        
+    // Mark that we've won the game
+    hasWonGame = true;
+    
+    // If music hasn't been started yet, just set the current track to bgm2
+    if (firstInteraction) {
+        currentBgm = bgm2;
+        return;
+    }
+    
+    // If music is currently playing, do the smooth fade transition
+    if (musicOn) {
         // Show music change notification
         const notification = document.createElement('div');
         notification.className = 'music-notification';
@@ -994,8 +995,8 @@ function switchToVictoryMusic() {
         
         // Fade out game music
         let fadeOut = setInterval(() => {
-            if (bgm1.volume > 0.1) {
-                bgm1.volume -= 0.1;
+            if (bgm1.volume > 0.05) {
+                bgm1.volume = Math.max(0, bgm1.volume - 0.1);
             } else {
                 clearInterval(fadeOut);
                 bgm1.pause();
@@ -1004,12 +1005,14 @@ function switchToVictoryMusic() {
                 
                 // Start victory music with fade in
                 bgm2.volume = 0;
-                bgm2.play().catch(() => {});
+                bgm2.play().catch((err) => {
+                    console.log('Victory music failed to play:', err);
+                });
                 currentBgm = bgm2;
                 
                 let fadeIn = setInterval(() => {
-                    if (bgm2.volume < 0.7) {
-                        bgm2.volume += 0.1;
+                    if (bgm2.volume < 0.65) {
+                        bgm2.volume = Math.min(0.7, bgm2.volume + 0.1);
                     } else {
                         clearInterval(fadeIn);
                         bgm2.volume = 0.7;
@@ -1017,9 +1020,8 @@ function switchToVictoryMusic() {
                 }, 100);
             }
         }, 100);
-    } else if (!musicOn && !hasWonGame) {
-        // If music was off, just switch the track
-        hasWonGame = true;
+    } else {
+        // If music was off when winning, just update the current track
         currentBgm = bgm2;
     }
 }
@@ -1034,13 +1036,15 @@ musicBtn.onclick = function(e) {
     if(musicOn) {
         currentBgm.pause();
         musicBtn.innerText = '🎵';
+        musicOn = false;
     } else {
-        // If game is won, play victory music, otherwise game music
-        currentBgm = hasWonGame ? bgm2 : bgm1;
-        currentBgm.play().catch(() => {});
+        // Always play the current track
+        currentBgm.play().catch((err) => {
+            console.log('Music failed to play:', err);
+        });
         musicBtn.innerText = '🔊';
+        musicOn = true;
     }
-    musicOn = !musicOn;
 };
 
 // Prevent zoom on double tap for mobile
