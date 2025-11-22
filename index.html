@@ -944,6 +944,13 @@ rewardCard.onclick = function() {
         `;
         document.head.appendChild(celebStyle);
     }
+    // Stop game music if still playing
+    bgm1.pause();
+    bgm1.currentTime = 0;
+
+    // Start victory music (browser will ALLOW this because rewardCard onclick is a gesture)
+    bgm2.volume = 0.7;
+    bgm2.play().catch(err => console.log("Victory music failed:", err));
 };
 
 // MUSIC CONTROL - FIXED VERSION
