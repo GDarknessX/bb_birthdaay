@@ -3,14 +3,15 @@
     🎂 Birthday Card with Love
     Created by Barry for bb
     
-    To customize music:
-    1. Upload your MP3 file to Google Drive/Dropbox/GitHub
-    2. Get the direct download link
-    3. Replace the src URL in the <audio> tag below
+    Music Setup:
+    - Game music: Plays during the heart-popping game
+    - Victory music: Plays after winning the game
+    - Both songs hosted on Google Drive
+    - Music switches automatically with smooth fade transition
     
     To deploy:
     - Upload to GitHub Pages (recommended)
-    - Or use Netlify Drop for quick sharing
+    - Or use Tiiny.host for quick sharing
     - See deployment_guide.md for details
 -->
 <html lang="zh">
@@ -534,6 +535,45 @@
         }
     }
 
+    /* Music transition notification */
+    .music-notification {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #ff6ec7, #ff4081);
+        color: white;
+        padding: 12px 25px;
+        border-radius: 25px;
+        font-size: 1rem;
+        box-shadow: 0 5px 20px rgba(255, 110, 199, 0.5);
+        z-index: 100;
+        animation: slideDown 0.5s ease, slideUp 0.5s ease 2.5s forwards;
+        pointer-events: none;
+    }
+
+    @keyframes slideDown {
+        from {
+            transform: translateX(-50%) translateY(-100px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(-50%) translateY(-100px);
+            opacity: 0;
+        }
+    }
+
     /* Confetti */
     .confetti {
         position: fixed;
@@ -625,8 +665,8 @@
 
     <!-- Hidden message -->
     <div class="msg-box" id="mainMessage">
-        生日快乐宝贝！今天虽然我们在不同的城市，但我的心永远在你那里。<br>
-        愿你的每一天都充满爱与欢笑 💖
+        生日快乐，我的bb！咱们又过了一年，但是年龄还是18！咱们这一年克服了好多好多困难，bb真的很棒很棒！<br>
+        bb每天的努力我都看在眼里哒！希望bb接下来要更加注意自己的身体哦，无论后面多困难，都是我们俩一起跨过哦！ 💖
     </div>
 
     <!-- Fancy Gift Box -->
@@ -645,11 +685,11 @@
         <div class="gift-emoji">🎁</div>
     </div>
 
-    <button id="gameButton">🎮 点击开始游戏：戳破爱心</button>
+    <button id="gameButton">🎮 点击开始游戏：收集爱心</button>
     <div id="scoreBoard">
-        Score: <span id="score">0</span> / <span id="target">15</span>
+        Score: <span id="score">0</span> / <span id="target">23</span>
         <div style="font-size: 0.8em; margin-top: 5px; color: #ff6ec7;">
-            ✨ 每戳破一个就更靠近你的礼物！
+            ✨ 收集23个爱心解锁生日礼物！
         </div>
     </div>
 </div>
@@ -660,30 +700,36 @@
         <div class="reward-icon">💌</div>
         <div class="reward-text">
             bb，太厉害啦！<br>
-            戳破了这么多爱心 ❤️<br><br>
-            <strong>点我打开你的生日留言～</strong>
+            收集了好多爱心 ❤️<br><br>
+            <strong>点我打开bb的生日留言～</strong>
         </div>
     </div>
 </div>
 
 <!-- MUSIC -->
 <button id="musicBtn">🎵</button>
-<audio id="bgm" loop>
+
+<!-- First song - plays during the game -->
+<audio id="bgm1" loop>
     <!-- 
-        Music Options:
-        1. Use a free birthday song from Pixabay (current)
-        2. Upload your own music file to a service like:
-           - Google Drive (share link, change /view to /uc?export=download&id=FILE_ID)
-           - Dropbox (use dl=1 parameter)
-           - GitHub (use raw.githubusercontent.com link)
-        3. Use any direct MP3 URL
+        TO ADD YOUR OWN MUSIC:
+        1. Upload MP3 to GitHub (recommended) or Dropbox
+        2. Get the streaming URL (not download URL)
+        3. Replace the src below
         
-        Example formats:
-        Google Drive: https://drive.google.com/uc?export=download&id=YOUR_FILE_ID
-        Dropbox: https://www.dropbox.com/s/xxxxx/song.mp3?dl=1
-        GitHub: https://raw.githubusercontent.com/username/repo/main/song.mp3
+        GitHub: https://raw.githubusercontent.com/username/repo/main/song1.mp3
+        Dropbox: https://dl.dropboxusercontent.com/s/xxxxx/song1.mp3
     -->
+    <!-- Using free birthday music for now - replace with your song -->
+    <source src="https://cdn.pixabay.com/audio/2024/06/26/audio_3fe5e56940.mp3" type="audio/mp3">
+    <!-- Backup source -->
     <source src="https://cdn.pixabay.com/audio/2022/10/11/audio_6a02530098.mp3" type="audio/mp3">
+</audio>
+
+<!-- Second song - plays after winning the game -->
+<audio id="bgm2" loop>
+    <!-- Replace with your victory/romantic song URL -->
+    <source src="https://cdn.pixabay.com/audio/2022/08/03/audio_54ca0ffa52.mp3" type="audio/mp3">
     <!-- Backup source -->
     <source src="https://cdn.pixabay.com/audio/2022/03/10/audio_36ff0e4d07.mp3" type="audio/mp3">
 </audio>
@@ -776,7 +822,7 @@ setInterval(createBalloon, 3000);
 // GAME LOGIC
 let playing = false;
 let score = 0;
-const targetScore = 15;
+const targetScore = 23;
 
 document.getElementById('target').innerText = targetScore;
 const scoreSpan = document.getElementById('score');
@@ -854,6 +900,9 @@ function endGame() {
     gameButton.innerText = '你已经解锁生日留言啦 💌';
     gameButton.style.background = 'linear-gradient(135deg, #4caf50, #45a049)';
     
+    // Switch to victory music
+    switchToVictoryMusic();
+    
     // Show the reward overlay
     rewardOverlay.style.display = 'flex';
     
@@ -904,18 +953,69 @@ rewardCard.onclick = function() {
 };
 
 // MUSIC CONTROL
-const bgm = document.getElementById('bgm');
+const bgm1 = document.getElementById('bgm1'); // Game music
+const bgm2 = document.getElementById('bgm2'); // Victory music
 const musicBtn = document.getElementById('musicBtn');
 let musicOn = false;
 let firstInteraction = true;
+let currentBgm = bgm1; // Start with game music
+let hasWonGame = false; // Track if game has been won
+
+// Set initial volume
+bgm1.volume = 0.7;
+bgm2.volume = 0.7;
 
 // Function to start music
 function startMusic() {
     if (firstInteraction) {
-        bgm.play().catch(() => {});
+        currentBgm.play().catch(() => {});
         musicOn = true;
         musicBtn.innerText = '🔊';
         firstInteraction = false;
+    }
+}
+
+// Function to switch to victory music with fade
+function switchToVictoryMusic() {
+    if (musicOn && !hasWonGame) {
+        hasWonGame = true;
+        
+        // Show music change notification
+        const notification = document.createElement('div');
+        notification.className = 'music-notification';
+        notification.innerHTML = '🎵 切换到生日歌曲 🎂';
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+        
+        // Fade out game music
+        let fadeOut = setInterval(() => {
+            if (bgm1.volume > 0.1) {
+                bgm1.volume -= 0.1;
+            } else {
+                clearInterval(fadeOut);
+                bgm1.pause();
+                bgm1.currentTime = 0;
+                bgm1.volume = 0.7;
+                
+                // Start victory music with fade in
+                bgm2.volume = 0;
+                bgm2.play().catch(() => {});
+                currentBgm = bgm2;
+                
+                let fadeIn = setInterval(() => {
+                    if (bgm2.volume < 0.7) {
+                        bgm2.volume += 0.1;
+                    } else {
+                        clearInterval(fadeIn);
+                        bgm2.volume = 0.7;
+                    }
+                }, 100);
+            }
+        }, 100);
+    } else if (!musicOn && !hasWonGame) {
+        // If music was off, just switch the track
+        hasWonGame = true;
+        currentBgm = bgm2;
     }
 }
 
@@ -927,10 +1027,12 @@ document.body.addEventListener('touchstart', startMusic, { once: true });
 musicBtn.onclick = function(e) {
     e.stopPropagation();
     if(musicOn) {
-        bgm.pause();
+        currentBgm.pause();
         musicBtn.innerText = '🎵';
     } else {
-        bgm.play().catch(() => {});
+        // If game is won, play victory music, otherwise game music
+        currentBgm = hasWonGame ? bgm2 : bgm1;
+        currentBgm.play().catch(() => {});
         musicBtn.innerText = '🔊';
     }
     musicOn = !musicOn;
