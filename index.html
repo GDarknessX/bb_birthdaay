@@ -4,15 +4,11 @@
     Created by Barry for bb
     
     Music Setup:
-    - Game music: Plays during the heart-popping game
-    - Victory music: Plays after winning the game
+    - Game music: Starts when game starts
+    - Victory music: Auto-switches after collecting 23 hearts
     - Both songs hosted on GitHub
-    - Music switches automatically with smooth fade transition
     
-    To deploy:
-    - Upload to GitHub Pages (recommended)
-    - Or use Tiiny.host for quick sharing
-    - See deployment_guide.md for details
+    Fixed: Music properly switches after winning!
 -->
 <html lang="zh">
 <head>
@@ -837,6 +833,50 @@ giftBox.addEventListener('click', function() {
     }, 500);
 });
 
+// MUSIC CONTROL - PROPERLY FIXED
+const bgm1 = document.getElementById('bgm1'); // Game music
+const bgm2 = document.getElementById('bgm2'); // Victory music
+const musicBtn = document.getElementById('musicBtn');
+let musicOn = false;
+let hasWonGame = false; // Track if game has been won
+let currentBgm = bgm1; // Current playing music
+
+// Set initial volume
+bgm1.volume = 0.7;
+bgm2.volume = 0.7;
+
+// Function to switch to victory music - FIXED VERSION
+function switchToVictoryMusic() {
+    console.log('Switching to victory music...');
+    hasWonGame = true;
+    
+    // If music is currently on, do the fade transition
+    if (musicOn) {
+        // Show notification
+        const notification = document.createElement('div');
+        notification.className = 'music-notification';
+        notification.innerHTML = '🎵 切换到生日歌曲 🎂';
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+        
+        // Stop game music
+        bgm1.pause();
+        bgm1.currentTime = 0;
+        
+        // Start victory music
+        currentBgm = bgm2;
+        bgm2.play().catch((err) => {
+            console.log('Victory music play failed:', err);
+        });
+        
+        musicBtn.innerText = '🔊';
+    } else {
+        // If music is off, just update which track should play next
+        currentBgm = bgm2;
+    }
+}
+
+// Start game and music
 gameButton.onclick = function() {
     if (playing) return;
     playing = true;
@@ -844,6 +884,21 @@ gameButton.onclick = function() {
     scoreSpan.innerText = score;
     scoreBoard.style.display = 'block';
     gameButton.innerText = '继续收集爱心 💖';
+    
+    // Start game music if not already playing
+    if (!musicOn && !hasWonGame) {
+        bgm1.play().then(() => {
+            console.log('Game music started');
+            musicOn = true;
+            musicBtn.innerText = '🔊';
+        }).catch((err) => {
+            console.log('Game music failed:', err);
+            // Try again after a moment
+            setTimeout(() => {
+                bgm1.play().catch(() => {});
+            }, 100);
+        });
+    }
 
     gameInterval = setInterval(() => {
         const heart = document.createElement('div');
@@ -889,12 +944,13 @@ gameButton.onclick = function() {
 };
 
 function endGame() {
+    console.log('Game ended! Switching music...');
     if (gameInterval) clearInterval(gameInterval);
     playing = false;
     gameButton.innerText = '你已经解锁生日留言啦 💌';
     gameButton.style.background = 'linear-gradient(135deg, #4caf50, #45a049)';
     
-    // Switch to victory music
+    // IMPORTANT: Switch to victory music when game ends
     switchToVictoryMusic();
     
     // Show the reward overlay
@@ -944,98 +1000,7 @@ rewardCard.onclick = function() {
         `;
         document.head.appendChild(celebStyle);
     }
-    // Stop game music if still playing
-    bgm1.pause();
-    bgm1.currentTime = 0;
-
-    // Start victory music (browser will ALLOW this because rewardCard onclick is a gesture)
-    bgm2.volume = 0.7;
-    bgm2.play().catch(err => console.log("Victory music failed:", err));
 };
-
-// MUSIC CONTROL - FIXED VERSION
-const bgm1 = document.getElementById('bgm1'); // Game music
-const bgm2 = document.getElementById('bgm2'); // Victory music
-const musicBtn = document.getElementById('musicBtn');
-let musicOn = false;
-let firstInteraction = true;
-let currentBgm = bgm1; // Start with game music
-let hasWonGame = false; // Track if game has been won
-
-// Set initial volume
-bgm1.volume = 0.7;
-bgm2.volume = 0.7;
-
-// Function to start music
-function startMusic() {
-    if (firstInteraction) {
-        // If game has been won, start with victory music, otherwise game music
-        currentBgm = hasWonGame ? bgm2 : bgm1;
-        currentBgm.play().catch((err) => {
-            console.log('Music autoplay failed:', err);
-        });
-        musicOn = true;
-        musicBtn.innerText = '🔊';
-        firstInteraction = false;
-    }
-}
-
-// FIXED: Function to switch to victory music
-function switchToVictoryMusic() {
-    // Mark that we've won the game
-    hasWonGame = true;
-    
-    // If music hasn't been started yet, just set the current track to bgm2
-    if (firstInteraction) {
-        currentBgm = bgm2;
-        return;
-    }
-    
-    // If music is currently playing, do the smooth fade transition
-    if (musicOn) {
-        // Show music change notification
-        const notification = document.createElement('div');
-        notification.className = 'music-notification';
-        notification.innerHTML = '🎵 切换到生日歌曲 🎂';
-        document.body.appendChild(notification);
-        setTimeout(() => notification.remove(), 3000);
-        
-        // Fade out game music
-        let fadeOut = setInterval(() => {
-            if (bgm1.volume > 0.05) {
-                bgm1.volume = Math.max(0, bgm1.volume - 0.1);
-            } else {
-                clearInterval(fadeOut);
-                bgm1.pause();
-                bgm1.currentTime = 0;
-                bgm1.volume = 0.7;
-                
-                // Start victory music with fade in
-                bgm2.volume = 0;
-                bgm2.play().catch((err) => {
-                    console.log('Victory music failed to play:', err);
-                });
-                currentBgm = bgm2;
-                
-                let fadeIn = setInterval(() => {
-                    if (bgm2.volume < 0.65) {
-                        bgm2.volume = Math.min(0.7, bgm2.volume + 0.1);
-                    } else {
-                        clearInterval(fadeIn);
-                        bgm2.volume = 0.7;
-                    }
-                }, 100);
-            }
-        }, 100);
-    } else {
-        // If music was off when winning, just update the current track
-        currentBgm = bgm2;
-    }
-}
-
-// Start music on first interaction (for mobile browsers)
-document.body.addEventListener('click', startMusic, { once: true });
-document.body.addEventListener('touchstart', startMusic, { once: true });
 
 // Toggle music button
 musicBtn.onclick = function(e) {
@@ -1045,9 +1010,9 @@ musicBtn.onclick = function(e) {
         musicBtn.innerText = '🎵';
         musicOn = false;
     } else {
-        // Always play the current track
+        // Play the appropriate track
         currentBgm.play().catch((err) => {
-            console.log('Music failed to play:', err);
+            console.log('Music toggle failed:', err);
         });
         musicBtn.innerText = '🔊';
         musicOn = true;
